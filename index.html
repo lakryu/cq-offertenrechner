@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Offertenrechner</title>
+  <meta name="description" content="Offertenrechner nach Preisliste Dienstleistungen">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232457d6'/%3E%3Cpath d='M9 8h10l4 4v12H9z' fill='white'/%3E%3Cpath d='M12 16h8M12 19.5h8M12 13h4' stroke='%232457d6' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-logo" aria-hidden="true"></span>
+      <div>
+        <strong>Offertenrechner</strong>
+        <small id="brandFirma"></small>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab aktiv" data-view="rechner" role="tab">Rechner</button>
+      <button class="tab" data-view="preise" role="tab">Preise</button>
+    </nav>
+  </header>
+
+  <div id="overrideBanner" class="banner" hidden>
+    <span>⚠︎ Lokale Preisänderungen aktiv – gelten nur in diesem Browser.</span>
+    <button class="btn klein" data-aktion="preise-export">preise.js herunterladen</button>
+    <button class="btn klein ghost" data-aktion="preise-reset">Verwerfen</button>
+  </div>
+
+  <!-- ========================= RECHNER ========================= -->
+  <main id="view-rechner" class="view rechner">
+    <aside class="produkte">
+      <div class="suche">
+        <input id="suche" type="search" placeholder="Produkt suchen …  ( / )" autocomplete="off">
+      </div>
+      <nav id="produktListe" class="produkt-liste"></nav>
+    </aside>
+
+    <section class="kalkulator">
+      <div class="karte">
+        <div class="kalk-kopf">
+          <div>
+            <p class="gruppe-label" id="kalkGruppe"></p>
+            <h1 id="kalkTitel"></h1>
+            <p class="info" id="kalkInfo"></p>
+          </div>
+          <span id="editBadge" class="badge" hidden>Position bearbeiten</span>
+        </div>
+        <form id="kalkForm" class="kalk-form" autocomplete="off" onsubmit="return false"></form>
+      </div>
+
+      <div class="karte ergebnis">
+        <div id="ergebnisFehler" class="fehler" hidden></div>
+        <table class="zeilen" id="ergebnisTabelle">
+          <thead><tr><th>Bezeichnung</th><th class="r">Menge</th><th class="r">Preis</th><th class="r">Total</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <ul id="ergebnisHinweise" class="hinweise"></ul>
+        <div class="ergebnis-fuss">
+          <div class="ergebnis-total">
+            <span>Total Position</span>
+            <strong id="ergebnisTotal">CHF 0.00</strong>
+          </div>
+          <div class="ergebnis-knoepfe">
+            <button type="button" class="btn ghost" id="btnAbbrechen" hidden>Abbrechen</button>
+            <button type="button" class="btn primaer gross" id="btnHinzufuegen">
+              <span id="btnHinzuText">Zur Offerte hinzufügen</span> <kbd>↵</kbd>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="offerte" id="offertePanel">
+      <div class="karte offerte-karte">
+        <div class="offerte-kopf">
+          <h2>Offerte</h2>
+          <div class="menu-knoepfe">
+            <button class="btn klein ghost" data-aktion="neu" title="Alle Positionen entfernen">Leeren</button>
+          </div>
+        </div>
+
+        <div id="positionen" class="positionen"></div>
+
+        <div class="summen">
+          <div class="summe-zeile"><span>Zwischensumme</span><span id="sumZwischen">0.00</span></div>
+          <div class="summe-zeile edit">
+            <label>Rabatt <input type="number" min="0" max="100" step="0.5" data-off="rabattProzent" class="mini"> %</label>
+            <span id="sumRabatt">0.00</span>
+          </div>
+          <div class="summe-zeile edit">
+            <label>Lieferung / Diverses CHF <input type="number" min="0" step="0.05" data-off="lieferung" class="mini"></label>
+            <span id="sumLieferung">0.00</span>
+          </div>
+          <div class="summe-zeile total"><span>Total CHF</span><span id="sumTotal">0.00</span></div>
+          <div class="summe-zeile klein muted"><span id="sumMwstText">inkl. MwSt</span><span id="sumMwst">0.00</span></div>
+        </div>
+
+        <label class="check-zeile"><input type="checkbox" data-off="details"> Details pro Position in Offerte zeigen</label>
+
+        <div class="offerte-aktionen">
+          <button class="btn primaer" data-aktion="drucken">Drucken / PDF</button>
+          <button class="btn" data-aktion="kopieren">Als Text kopieren</button>
+        </div>
+      </div>
+    </aside>
+
+    <button id="mobilOfferte" class="mobil-offerte" type="button">
+      Offerte · <span id="mobilAnzahl">0</span> Pos. · <strong id="mobilTotal">CHF 0.00</strong>
+    </button>
+  </main>
+
+  <!-- ========================= PREISE ========================= -->
+  <main id="view-preise" class="view preise" hidden>
+    <aside class="produkte">
+      <nav id="preisSektionen" class="produkt-liste"></nav>
+    </aside>
+    <section class="preis-editor">
+      <div class="karte">
+        <div class="liste-kopf">
+          <div>
+            <h1 id="preisTitel">Preise</h1>
+            <p class="muted">Änderungen gelten sofort (in diesem Browser). Für alle Nutzer: <em>preise.js herunterladen</em> und im GitHub-Repository ersetzen.</p>
+          </div>
+          <div class="menu-knoepfe">
+            <button class="btn primaer" data-aktion="preise-export">preise.js herunterladen</button>
+            <button class="btn ghost" data-aktion="preise-reset">Änderungen verwerfen</button>
+          </div>
+        </div>
+        <div id="preisInhalt"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ========================= DRUCK ========================= -->
+  <div id="druck" class="druck" aria-hidden="true"></div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="preise.js"></script>
+  <script src="produkte.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
